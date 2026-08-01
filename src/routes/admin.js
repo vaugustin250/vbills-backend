@@ -68,9 +68,9 @@ router.post('/tenants', async (req, res) => {
 
     // Create tenant
     await query(
-      `INSERT INTO tenants (id, business_name, email, phone, address, license_status, installation_date, renewal_end)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [tenantId, company.business_name, company.email, company.phone, company.address, company.license_status, company.installation_date || null, company.renewal_end || null]
+      `INSERT INTO tenants (id, business_name, email, phone, address, license_status, renewal_end)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [tenantId, company.business_name, company.email, company.phone, company.address, company.license_status, company.renewal_end || null]
     )
 
     // Create default settings
