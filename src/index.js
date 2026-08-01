@@ -1,5 +1,6 @@
 require('dotenv').config()
 const express = require('express')
+const path = require('path')
 const helmet = require('helmet')
 const cors = require('cors')
 const { rateLimit } = require('express-rate-limit')
@@ -77,9 +78,20 @@ app.use('/api/staff', authMiddleware, staffRoutes)
 app.use('/api/zones', authMiddleware, zonesRoutes)
 app.use('/api/passes', authMiddleware, passesRoutes)
 
-// ── 404 Handler ────────────────────────────────────────────────
-app.use((req, res) => {
+// ── Serve Frontend (Static) ────────────────────────────────────
+// Serve the built React app from the parkease-web/dist folder
+const frontendPath = path.join(__dirname, '../../parkease-web/dist')
+app.use(express.static(frontendPath))
+
+// ── 404 Handler for APIs ───────────────────────────────────────
+app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Route not found' })
+})
+
+// ── React Router Fallback ──────────────────────────────────────
+// For any non-API route, send back index.html so React Router can handle it
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'))
 })
 
 // ── Global Error Handler ───────────────────────────────────────
