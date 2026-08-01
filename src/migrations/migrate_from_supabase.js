@@ -96,7 +96,7 @@ async function migrate() {
           entry_time, exit_time, duration_minutes, amount_charged, amount_paid_at_entry,
           amount_paid_at_exit, payment_method, zone
          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-         ON CONFLICT (id) DO NOTHING`,
+         ON CONFLICT (id, entry_time) DO NOTHING`,
         [
           r.id, r.tenant_id, r.vehicle_number, r.vehicle_type, r.driver_name, r.driver_phone,
           r.entry_time, r.exit_time, r.duration_minutes, r.amount_charged, r.amount_paid_at_entry,
