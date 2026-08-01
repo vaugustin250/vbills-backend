@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS parking_records (
   image_url TEXT,                    -- ANPR image reference
   synced_from_offline BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  PRIMARY KEY (id)
+  PRIMARY KEY (id, entry_time)
 ) PARTITION BY RANGE (entry_time);
 
 -- Create year partitions (add more each year as needed)
