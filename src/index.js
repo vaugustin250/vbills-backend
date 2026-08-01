@@ -22,19 +22,22 @@ const PORT = process.env.PORT || 4000
 app.use(helmet())
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (mobile apps, curl, same-origin)
     if (!origin) return callback(null, true);
     
-    // Allow any localhost or vercel.app origin for development/deployments
-    if (origin.startsWith('http://localhost:') || origin.endsWith('.vercel.app')) {
-      return callback(null, true);
-    }
+    // Allow localhost for development
+    if (origin.startsWith('http://localhost:')) return callback(null, true);
     
-    // Check against FRONTEND_URL environment variable (supports comma-separated list)
-    const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',').map(s => s.trim());
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+    // Allow any vercel.app deployment
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+
+    // Allow the server's own IP on any port (for AWS self-hosted frontend)
+    const serverIp = process.env.SERVER_IP || '13.51.56.10';
+    if (origin.includes(serverIp)) return callback(null, true);
+    
+    // Check against FRONTEND_URL environment variable (comma-separated list)
+    const allowedOrigins = (process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
     
     callback(new Error('Not allowed by CORS'));
   },
@@ -79,20 +82,26 @@ app.use('/api/zones', authMiddleware, zonesRoutes)
 app.use('/api/passes', authMiddleware, passesRoutes)
 
 // ── Serve Frontend (Static) ────────────────────────────────────
-// Serve the built React app from the parkease-web/dist folder
-const frontendPath = path.join(__dirname, '../../parkease-web/dist')
-app.use(express.static(frontendPath))
-
-// ── 404 Handler for APIs ───────────────────────────────────────
-app.use('/api', (req, res) => {
-  res.status(404).json({ error: 'Route not found' })
-})
-
-// ── React Router Fallback ──────────────────────────────────────
-// For any non-API route, send back index.html so React Router can handle it
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'))
-})
+// In production on AWS, the frontend is built in ~/parkease-web/dist
+// On local dev, the frontend is served by Vite dev server separately
+const frontendDist = process.env.FRONTEND_DIST_PATH || path.join(__dirname, '../../parkease-web/dist')
+const fs = require('fs')
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist))
+  // React Router fallback — serve index.html for all non-API routes
+  app.get('*', (req, res) => {
+    const indexPath = path.join(frontendDist, 'index.html')
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath)
+    } else {
+      res.status(404).json({ error: 'Frontend not built. Run npm run build in parkease-web.' })
+    }
+  })
+} else {
+  // No built frontend — API-only mode
+  app.use('/api', (req, res) => res.status(404).json({ error: 'API route not found' }))
+  app.use((req, res) => res.status(200).json({ status: 'VBills API is running', tip: 'Frontend not deployed on this server.' }))
+}
 
 // ── Global Error Handler ───────────────────────────────────────
 app.use((err, req, res, next) => {
