@@ -89,7 +89,7 @@ const fs = require('fs')
 if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist))
   // React Router fallback — serve index.html for all non-API routes
-  app.get('*', (req, res) => {
+  app.get(/^(.*)$/, (req, res) => {
     const indexPath = path.join(frontendDist, 'index.html')
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath)
