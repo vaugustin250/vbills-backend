@@ -9,13 +9,16 @@ const router = express.Router()
 // POST /api/parking/entry — Register a vehicle entering
 router.post('/entry', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (req, res) => {
   try {
-    const {
-      vehicleNumber, vehicleType, driverName, driverPhone,
-      zone, amountPaidAtEntry, paymentMethodAtEntry,
-      syncId // for offline sync — client provides its own UUID
-    } = req.body
+    const vehicleNum = req.body.vehicle_number || req.body.vehicleNumber
+    const vType = req.body.vehicle_type || req.body.vehicleType
+    const dName = req.body.driver_name || req.body.driverName
+    const dPhone = req.body.driver_phone || req.body.driverPhone
+    const zoneId = req.body.zone_id || req.body.zone
+    const amountPaidAtEntry = req.body.amount_paid_at_entry || 0
+    const paymentMethodAtEntry = req.body.entry_payment_mode || req.body.paymentMethodAtEntry
+    const syncId = req.body.id || req.body.syncId
 
-    if (!vehicleNumber || !vehicleType) {
+    if (!vehicleNum || !vType) {
       return res.status(400).json({ error: 'Vehicle number and type are required' })
     }
 
@@ -26,7 +29,7 @@ router.post('/entry', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (
     const existing = await query(
       `SELECT id FROM parking_records
        WHERE tenant_id = $1 AND vehicle_number = $2 AND exit_time IS NULL`,
-      [tenantId, vehicleNumber.toUpperCase().trim()]
+      [tenantId, vehicleNum.toUpperCase().trim()]
     )
     if (existing.rows.length > 0) {
       return res.status(409).json({ error: 'This vehicle is already inside the parking lot.' })
@@ -40,9 +43,9 @@ router.post('/entry', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (
        RETURNING *`,
       [
         id, tenantId,
-        vehicleNumber.toUpperCase().trim(), vehicleType,
-        driverName || null, driverPhone || null,
-        zone || null,
+        vehicleNum.toUpperCase().trim(), vType,
+        dName || null, dPhone || null,
+        zoneId || null,
         amountPaidAtEntry || 0,
         paymentMethodAtEntry || null
       ]
@@ -58,7 +61,9 @@ router.post('/entry', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (
 // POST /api/parking/exit — Record a vehicle leaving + calculate fee
 router.post('/exit', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (req, res) => {
   try {
-    const { recordId, paymentMethod, overrideAmount } = req.body
+    const recordId = req.body.record_id || req.body.id || req.body.recordId
+    const paymentMethod = req.body.payment_method || req.body.paymentMethod
+    const overrideAmount = req.body.amount_charged || req.body.overrideAmount
     const tenantId = req.user.tenantId
 
     // Fetch record
