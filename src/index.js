@@ -9,6 +9,9 @@ const parkingRoutes = require('./routes/parking')
 const reportsRoutes = require('./routes/reports')
 const settingsRoutes = require('./routes/settings')
 const adminRoutes = require('./routes/admin')
+const staffRoutes = require('./routes/staff')
+const zonesRoutes = require('./routes/zones')
+const passesRoutes = require('./routes/passes')
 const { authMiddleware } = require('./middleware/auth')
 
 const app = express()
@@ -17,7 +20,23 @@ const PORT = process.env.PORT || 4000
 // ── Security Middleware ────────────────────────────────────────
 app.use(helmet())
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow any localhost origin for local development
+    if (origin.startsWith('http://localhost:')) {
+      return callback(null, true);
+    }
+    
+    // Check against FRONTEND_URL environment variable (supports comma-separated list)
+    const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',').map(s => s.trim());
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -54,6 +73,9 @@ app.use('/api/parking', authMiddleware, parkingRoutes)
 app.use('/api/reports', authMiddleware, reportsRoutes)
 app.use('/api/settings', authMiddleware, settingsRoutes)
 app.use('/api/admin', authMiddleware, adminRoutes)
+app.use('/api/staff', authMiddleware, staffRoutes)
+app.use('/api/zones', authMiddleware, zonesRoutes)
+app.use('/api/passes', authMiddleware, passesRoutes)
 
 // ── 404 Handler ────────────────────────────────────────────────
 app.use((req, res) => {

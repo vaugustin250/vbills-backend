@@ -79,4 +79,18 @@ router.get('/records', requireRole('MANAGER', 'SUPER_ADMIN'), async (req, res) =
   }
 })
 
+// GET /api/reports/shifts — List shift reports
+router.get('/shifts', requireRole('MANAGER', 'SUPER_ADMIN'), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId
+    const result = await query(
+      `SELECT * FROM shift_reports WHERE tenant_id = $1 ORDER BY end_time DESC LIMIT 30`,
+      [tenantId]
+    )
+    res.json({ shifts: result.rows })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch shift reports' })
+  }
+})
+
 module.exports = router

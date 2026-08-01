@@ -43,8 +43,11 @@ router.put('/', requireRole('MANAGER', 'SUPER_ADMIN'), async (req, res) => {
         rate_four_wheeler_first = COALESCE($15, rate_four_wheeler_first),
         rate_four_wheeler_per_hour = COALESCE($16, rate_four_wheeler_per_hour),
         collect_driver_details = COALESCE($17, collect_driver_details),
+        rate_rules = COALESCE($18, rate_rules),
+        feature_passes_enabled = COALESCE($19, feature_passes_enabled),
+        zones_enabled = COALESCE($20, zones_enabled),
         updated_at = NOW()
-       WHERE tenant_id = $18`,
+       WHERE tenant_id = $21`,
       [
         s.company_name, s.address, s.phone, s.currency_symbol,
         s.total_slots, s.grace_period_minutes, s.gst_percent, s.receipt_footer,
@@ -52,6 +55,8 @@ router.put('/', requireRole('MANAGER', 'SUPER_ADMIN'), async (req, res) => {
         s.rate_two_wheeler_first, s.rate_two_wheeler_per_hour,
         s.rate_four_wheeler_first, s.rate_four_wheeler_per_hour,
         s.collect_driver_details,
+        s.rate_rules ? JSON.stringify(s.rate_rules) : null,
+        s.feature_passes_enabled, s.zones_enabled,
         tenantId
       ]
     )
