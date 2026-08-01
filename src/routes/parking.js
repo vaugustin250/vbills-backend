@@ -62,15 +62,27 @@ router.post('/entry', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (
 router.post('/exit', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (req, res) => {
   try {
     const recordId = req.body.record_id || req.body.id || req.body.recordId
+    const ticketNo = req.body.ticket_no
     const paymentMethod = req.body.payment_method || req.body.paymentMethod
     const overrideAmount = req.body.amount_charged || req.body.overrideAmount
     const tenantId = req.user.tenantId
 
-    // Fetch record
-    const recResult = await query(
-      `SELECT * FROM parking_records WHERE id = $1 AND tenant_id = $2 AND exit_time IS NULL`,
-      [recordId, tenantId]
-    )
+    // Fetch record (Try ticket_no first for robust offline sync, fallback to id)
+    let recResult
+    if (ticketNo) {
+      recResult = await query(
+        `SELECT * FROM parking_records WHERE ticket_no = $1 AND tenant_id = $2 AND exit_time IS NULL`,
+        [ticketNo, tenantId]
+      )
+    }
+    
+    if (!recResult || recResult.rows.length === 0) {
+      recResult = await query(
+        `SELECT * FROM parking_records WHERE id = $1 AND tenant_id = $2 AND exit_time IS NULL`,
+        [recordId, tenantId]
+      )
+    }
+
     if (recResult.rows.length === 0) {
       return res.status(404).json({ error: 'Active parking record not found' })
     }
