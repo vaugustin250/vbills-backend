@@ -24,6 +24,8 @@ router.post('/entry', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (
 
     const tenantId = req.user.tenantId
     const id = syncId || uuidv4()
+    const ticketNo = req.body.ticket_no || req.body.ticketNo || null
+    const operatorName = req.body.operator_name || req.body.operatorName || req.user.full_name || 'Watchman'
 
     // Check if vehicle is already parked
     const existing = await query(
@@ -38,8 +40,8 @@ router.post('/entry', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (
     const result = await query(
       `INSERT INTO parking_records
        (id, tenant_id, vehicle_number, vehicle_type, driver_name, driver_phone,
-        entry_time, zone, amount_paid_at_entry, payment_method_at_entry)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, $8, $9)
+        entry_time, zone, amount_paid_at_entry, payment_method_at_entry, ticket_no, operator_name)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, $8, $9, $10, $11)
        RETURNING *`,
       [
         id, tenantId,
@@ -47,7 +49,9 @@ router.post('/entry', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (
         dName || null, dPhone || null,
         zoneId || null,
         amountPaidAtEntry || 0,
-        paymentMethodAtEntry || null
+        paymentMethodAtEntry || null,
+        ticketNo,
+        operatorName
       ]
     )
 
@@ -175,16 +179,18 @@ router.post('/sync', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (r
           `INSERT INTO parking_records
            (id, tenant_id, vehicle_number, vehicle_type, driver_name, driver_phone,
             entry_time, exit_time, zone, amount_charged, amount_paid_at_entry,
-            amount_paid_at_exit, payment_method, duration_minutes)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+            amount_paid_at_exit, payment_method, duration_minutes, ticket_no, operator_name)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
            ON CONFLICT (id) DO NOTHING`,
           [
-            r.id, tenantId, r.vehicleNumber, r.vehicleType,
-            r.driverName || null, r.driverPhone || null,
-            r.entryTime, r.exitTime || null, r.zone || null,
-            r.amountCharged || 0, r.amountPaidAtEntry || 0,
-            r.amountPaidAtExit || 0, r.paymentMethod || 'Cash',
-            r.durationMinutes || null
+            r.id, tenantId, r.vehicleNumber || r.vehicle_number, r.vehicleType || r.vehicle_type,
+            r.driverName || r.driver_name || null, r.driverPhone || r.driver_phone || null,
+            r.entryTime || r.entry_time, r.exitTime || r.exit_time || null, r.zone || null,
+            r.amountCharged || r.amount_charged || 0, r.amountPaidAtEntry || r.amount_paid_at_entry || 0,
+            r.amountPaidAtExit || r.amount_paid_at_exit || 0, r.paymentMethod || r.payment_method || 'Cash',
+            r.durationMinutes || r.duration_minutes || null,
+            r.ticket_no || r.ticketNo || null,
+            r.operator_name || r.operatorName || req.user.full_name || 'Watchman'
           ]
         )
         synced++
