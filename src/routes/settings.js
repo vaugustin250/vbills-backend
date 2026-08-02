@@ -8,12 +8,22 @@ const router = express.Router()
 router.get('/', async (req, res) => {
   try {
     const tenantId = req.user.tenantId
-    const result = await query('SELECT * FROM settings WHERE tenant_id = $1', [tenantId])
+    let result = await query('SELECT * FROM settings WHERE tenant_id = $1', [tenantId])
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Settings not found' })
+      // Auto-create default settings row for this tenant
+      await query(
+        `INSERT INTO settings (tenant_id, company_name, currency_symbol, total_slots, grace_period_minutes, gst_percent,
+          rate_two_wheeler_first, rate_two_wheeler_per_hour, rate_four_wheeler_first, rate_four_wheeler_per_hour,
+          feature_passes_enabled, zones_enabled, collect_driver_details)
+         VALUES ($1, 'My Parking', '₹', 50, 5, 0, 20, 10, 40, 20, false, false, false)
+         ON CONFLICT (tenant_id) DO NOTHING`,
+        [tenantId]
+      )
+      result = await query('SELECT * FROM settings WHERE tenant_id = $1', [tenantId])
     }
     res.json({ settings: result.rows[0] })
   } catch (err) {
+    console.error('[settings/GET]', err)
     res.status(500).json({ error: 'Failed to fetch settings' })
   }
 })
