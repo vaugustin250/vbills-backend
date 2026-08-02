@@ -19,7 +19,12 @@ const app = express()
 const PORT = process.env.PORT || 4000
 
 // ── Security Middleware ────────────────────────────────────────
-app.use(helmet())
+app.use(helmet({
+  hsts: false, // Don't force HTTPS since we are testing on raw IP
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false
+}))
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, same-origin)
