@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { query } = require('./src/db');
 const fs = require('fs');
 
