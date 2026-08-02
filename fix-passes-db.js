@@ -12,7 +12,13 @@ async function run() {
     await query(sql3);
     console.log('✅ Feature flags added!');
 
-    // 2. Parking Passes
+    // 2. Shift Reports
+    console.log('Creating shift reports table...');
+    const sql2 = fs.readFileSync('./src/migrations/002_shift_reports.sql', 'utf8');
+    await query(sql2);
+    console.log('✅ Shift reports table created!');
+
+    // 3. Parking Passes
     console.log('Creating parking passes table...');
     const sql4 = fs.readFileSync('./src/migrations/004_parking_passes.sql', 'utf8');
     await query(sql4);
