@@ -93,4 +93,23 @@ router.get('/shifts', requireRole('MANAGER', 'SUPER_ADMIN'), async (req, res) =>
   }
 })
 
+// POST /api/reports/shift — Sync offline shift report
+router.post('/shift', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId
+    const { watchman_name, start_time, end_time, vehicles_in, vehicles_out, revenue_cash, revenue_upi, revenue_total } = req.body
+
+    await query(
+      `INSERT INTO shift_reports 
+       (tenant_id, watchman_name, start_time, end_time, vehicles_in, vehicles_out, revenue_cash, revenue_upi, revenue_total)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [tenantId, watchman_name, start_time, end_time, vehicles_in, vehicles_out, revenue_cash, revenue_upi, revenue_total]
+    )
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[reports/shift]', err)
+    res.status(500).json({ error: 'Failed to save shift report' })
+  }
+})
+
 module.exports = router

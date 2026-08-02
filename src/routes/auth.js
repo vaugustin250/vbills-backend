@@ -16,7 +16,7 @@ router.post('/login', async (req, res) => {
 
     // Fetch user + their tenant info
     const result = await query(
-      `SELECT u.*, t.license_status, t.business_name
+      `SELECT u.*, t.license_status, t.business_name, t.feature_passes_allowed, t.feature_zones_allowed
        FROM users u
        LEFT JOIN tenants t ON t.id = u.tenant_id
        WHERE u.email = $1 AND u.active = true`,
@@ -53,7 +53,11 @@ router.post('/login', async (req, res) => {
         fullName: user.full_name,
         role: user.role,
         tenantId: user.tenant_id,
-        businessName: user.business_name
+        businessName: user.business_name,
+        tenantData: {
+          feature_passes_allowed: user.feature_passes_allowed || false,
+          feature_zones_allowed: user.feature_zones_allowed || false
+        }
       }
     })
   } catch (err) {
