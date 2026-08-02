@@ -108,7 +108,7 @@ router.post('/exit', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (r
     const updated = await query(
       `UPDATE parking_records
        SET exit_time = NOW(), amount_charged = $1, amount_paid_at_exit = $2,
-           payment_method = $3, duration_minutes = $4
+           payment_method = $3, duration_minutes = $4, status = 'EXITED'
        WHERE id = $5
        RETURNING *`,
       [finalAmount, amountDue, paymentMethod || 'Cash', durationMinutes, recordId]
@@ -179,9 +179,12 @@ router.post('/sync', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (r
           `INSERT INTO parking_records
            (id, tenant_id, vehicle_number, vehicle_type, driver_name, driver_phone,
             entry_time, exit_time, zone, amount_charged, amount_paid_at_entry,
-            amount_paid_at_exit, payment_method, duration_minutes, ticket_no, operator_name)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
-           ON CONFLICT (id) DO NOTHING`,
+            amount_paid_at_exit, payment_method, duration_minutes, ticket_no, operator_name, status)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+           ON CONFLICT (id) DO UPDATE SET 
+             exit_time = EXCLUDED.exit_time, amount_charged = EXCLUDED.amount_charged,
+             amount_paid_at_exit = EXCLUDED.amount_paid_at_exit, payment_method = EXCLUDED.payment_method,
+             duration_minutes = EXCLUDED.duration_minutes, status = EXCLUDED.status`,
           [
             r.id, tenantId, r.vehicleNumber || r.vehicle_number, r.vehicleType || r.vehicle_type,
             r.driverName || r.driver_name || null, r.driverPhone || r.driver_phone || null,
@@ -190,7 +193,8 @@ router.post('/sync', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (r
             r.amountPaidAtExit || r.amount_paid_at_exit || 0, r.paymentMethod || r.payment_method || 'Cash',
             r.durationMinutes || r.duration_minutes || null,
             r.ticket_no || r.ticketNo || null,
-            r.operator_name || r.operatorName || req.user.full_name || 'Watchman'
+            r.operator_name || r.operatorName || req.user.full_name || 'Watchman',
+            (r.exitTime || r.exit_time) ? 'EXITED' : 'PARKED'
           ]
         )
         synced++
