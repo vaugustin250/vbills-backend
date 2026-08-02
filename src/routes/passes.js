@@ -15,7 +15,8 @@ router.get('/', requireRole('MANAGER', 'SUPER_ADMIN'), async (req, res) => {
     )
     res.json({ passes: result.rows })
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch passes' })
+    console.error(err)
+    res.status(500).json({ error: 'DB Error (GET): ' + err.message })
   }
 })
 
@@ -39,7 +40,7 @@ router.post('/', requireRole('MANAGER', 'SUPER_ADMIN'), async (req, res) => {
     res.status(201).json({ id })
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Failed to create pass' })
+    res.status(500).json({ error: 'DB Error: ' + err.message })
   }
 })
 
