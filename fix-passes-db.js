@@ -24,6 +24,12 @@ async function run() {
     await query(sql4);
     console.log('✅ Parking passes table created!');
 
+    // 4. Pass Usage Column
+    console.log('Adding used_entries to parking_passes...');
+    const sql5 = fs.readFileSync('./src/migrations/005_pass_usage.sql', 'utf8');
+    await query(sql5);
+    console.log('✅ Pass usage tracking added!');
+
     console.log('🎉 All Database fixes applied successfully!');
   } catch (err) {
     console.error('❌ ERROR:', err.message);

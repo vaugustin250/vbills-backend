@@ -55,6 +55,13 @@ router.post('/entry', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (
       ]
     )
 
+    if (paymentMethodAtEntry === 'PASS') {
+      await query(
+        `UPDATE parking_passes SET used_entries = used_entries + 1 WHERE tenant_id = $1 AND vehicle_number = $2 AND status = 'ACTIVE'`,
+        [tenantId, vehicleNum.toUpperCase().trim()]
+      )
+    }
+
     res.status(201).json({ record: result.rows[0] })
   } catch (err) {
     console.error('[parking/entry]', err)

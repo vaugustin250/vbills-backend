@@ -1,0 +1,1 @@
+ALTER TABLE parking_passes ADD COLUMN IF NOT EXISTS used_entries INT DEFAULT 0;

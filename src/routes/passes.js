@@ -6,7 +6,7 @@ const { requireRole } = require('../middleware/auth')
 const router = express.Router()
 
 // GET /api/passes — List all passes
-router.get('/', requireRole('MANAGER', 'SUPER_ADMIN'), async (req, res) => {
+router.get('/', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId
     const result = await query(
