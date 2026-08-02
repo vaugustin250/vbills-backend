@@ -1,6 +1,5 @@
--- Create parking_passes table for monthly/weekly passes
 CREATE TABLE IF NOT EXISTS parking_passes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   pass_number TEXT NOT NULL,
   pass_type TEXT NOT NULL,
