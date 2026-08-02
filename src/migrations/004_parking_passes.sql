@@ -1,4 +1,5 @@
-CREATE TABLE IF NOT EXISTS parking_passes (
+DROP TABLE IF EXISTS parking_passes CASCADE;
+CREATE TABLE parking_passes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   pass_number TEXT NOT NULL,
