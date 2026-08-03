@@ -6,7 +6,7 @@ const { requireRole } = require('../middleware/auth')
 const router = express.Router()
 
 // GET /api/zones — List all zones and their occupancy
-router.get('/', requireRole('MANAGER', 'SUPER_ADMIN'), async (req, res) => {
+router.get('/', requireRole('WATCHMAN', 'MANAGER', 'SUPER_ADMIN'), async (req, res) => {
   try {
     const tenantId = req.user.tenantId
     const zonesResult = await query(
