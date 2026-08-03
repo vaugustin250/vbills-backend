@@ -15,7 +15,7 @@ router.get('/', requireRole('MANAGER', 'SUPER_ADMIN'), async (req, res) => {
     )
     
     const recordsResult = await query(
-      `SELECT zone_id, slot_no FROM parking_records WHERE tenant_id = $1 AND status = 'PARKED' AND zone_id IS NOT NULL`,
+      `SELECT zone as zone_id, slot_number as slot_no FROM parking_records WHERE tenant_id = $1 AND exit_time IS NULL AND zone IS NOT NULL`,
       [tenantId]
     )
 
